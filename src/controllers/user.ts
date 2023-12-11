@@ -36,12 +36,19 @@ export const signup = async (req: express.Request, res: express.Response) => {
     return res.status(200).json({ token, result });
   } catch (error) {
     console.log(error);
-    return res.status(500).json({ error });
+    return res
+      .status(500)
+      .json({ message: "Something went wrong. Please Try again" });
   }
 };
 
 export const signin = async (req: express.Request, res: express.Response) => {
   const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
   try {
     const existingUser = await User.findOne({ email });
 
@@ -52,6 +59,7 @@ export const signin = async (req: express.Request, res: express.Response) => {
       password,
       existingUser.password
     );
+
     if (!isPasswordCorrect)
       return res.status(400).json({ message: "Invalid credentials" });
 
@@ -63,6 +71,8 @@ export const signin = async (req: express.Request, res: express.Response) => {
     return res.status(200).json({ result: existingUser, token });
   } catch (error) {
     console.log(error);
-    return res.status(500).json({ error });
+    return res
+      .status(500)
+      .json({ message: "Something went wrong. Please Try again" });
   }
 };
