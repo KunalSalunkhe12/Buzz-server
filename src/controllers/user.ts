@@ -7,6 +7,10 @@ import User from "../models/user";
 export const signup = async (req: express.Request, res: express.Response) => {
   const { name, username, password, email } = req.body;
 
+  if (!name || !username || !password || !email) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
   try {
     const existingUser = await User.findOne({ email });
 
@@ -15,12 +19,14 @@ export const signup = async (req: express.Request, res: express.Response) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+
     const result = await User.create({
       name,
       username,
       password: hashedPassword,
       email,
     });
+
     const token = jwt.sign(
       { email: result.email, id: result._id },
       process.env.JWT_SECRET as string,
