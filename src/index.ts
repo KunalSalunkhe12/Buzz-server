@@ -2,19 +2,23 @@ import express from "express";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import cors from "cors";
+import path from "path";
 dotenv.config();
 
 import userRoutes from "./routes/user";
+import postRoutes from "./routes/post";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.get("/", (_, res) => {
   res.send("Buzz api");
 });
 
 app.use("/user", userRoutes);
+app.use("/post", postRoutes);
 
 const PORT = process.env.PORT;
 
