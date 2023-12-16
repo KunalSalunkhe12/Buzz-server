@@ -19,7 +19,7 @@ export const createPost = async (
     const tagsArr = tags.split(", ");
 
     await Post.create({
-      creator: user?._id,
+      creator: user?.id,
       caption,
       location,
       tags: tagsArr,
