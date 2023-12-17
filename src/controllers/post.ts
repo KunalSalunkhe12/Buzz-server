@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import Post from "../models/post";
 import { uploadOnCloudinary } from "../utils/cloudinary";
+import sharp from "sharp";
+import path from "path";
 
 type CreatePostRequestBody = {
   caption: string;
@@ -15,30 +17,52 @@ export const createPost = async (
   const { caption, location, tags } = req.body;
   const image = req.file;
   const user = req.user;
+  const tagsArr = tags.split(", ");
 
   try {
-    const tagsArr = tags.split(", ");
-
-    if (image?.path) {
-      const imageUrl = await uploadOnCloudinary(image.path);
-
-      await Post.create({
-        creator: user?.id,
-        caption,
-        location,
-        tags: tagsArr,
-        imageUrl,
-      });
-    } else {
-      return res.status(500).json({ message: "Couldn't upload image" });
+    if (!image?.buffer) {
+      return res
+        .status(500)
+        .json({ success: false, message: "Image not available" });
     }
 
-    return res.status(201).json({ message: "Post created successfully" });
+    const compressedImagePath = path.join(
+      __dirname,
+      "..",
+      "..",
+      "uploads",
+      Date.now().toString() + image.originalname
+    );
+
+    const compressedFile = await sharp(image.buffer)
+      .jpeg({ quality: 80 })
+      .toFile(compressedImagePath);
+
+    if (!compressedFile) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Couldn't compress image" });
+    }
+
+    const imageUrl = await uploadOnCloudinary(compressedImagePath);
+
+    await Post.create({
+      creator: user?.id,
+      caption,
+      location,
+      tags: tagsArr,
+      imageUrl,
+    });
+
+    return res
+      .status(201)
+      .json({ success: true, message: "Post created successfully" });
   } catch (error) {
     console.log(error);
-    return res
-      .status(500)
-      .json({ message: "Something went wrong.Please try again" });
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong.Please try again",
+    });
   }
 };
 
