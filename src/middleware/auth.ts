@@ -5,7 +5,7 @@ const auth = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).send({ error: "Missing auth token" });
+    return res.status(401).json({ message: "Missing auth token" });
   }
 
   const token = authHeader.split(" ")[1];
@@ -18,7 +18,7 @@ const auth = async (req: Request, res: Response, next: NextFunction) => {
     return;
   } catch (err) {
     console.error(err);
-    return res.status(401).send({ error: "Invalid auth token" });
+    return res.status(401).json({ message: "Invalid auth token" });
   }
 };
 

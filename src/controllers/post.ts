@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import Post from "../models/post";
+import { uploadOnCloudinary } from "../utils/cloudinary";
 
 type CreatePostRequestBody = {
   caption: string;
@@ -18,18 +19,26 @@ export const createPost = async (
   try {
     const tagsArr = tags.split(", ");
 
-    await Post.create({
-      creator: user?.id,
-      caption,
-      location,
-      tags: tagsArr,
-      imageUrl: image?.path,
-    });
+    if (image?.path) {
+      const imageUrl = await uploadOnCloudinary(image.path);
 
-    res.status(201).json({ message: "Post created successfully" });
+      await Post.create({
+        creator: user?.id,
+        caption,
+        location,
+        tags: tagsArr,
+        imageUrl,
+      });
+    } else {
+      return res.status(500).json({ message: "Couldn't upload image" });
+    }
+
+    return res.status(201).json({ message: "Post created successfully" });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Something went wrong.Please try again" });
+    return res
+      .status(500)
+      .json({ message: "Something went wrong.Please try again" });
   }
 };
 
