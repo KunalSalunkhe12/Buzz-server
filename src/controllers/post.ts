@@ -3,6 +3,7 @@ import Post from "../models/post";
 import { uploadOnCloudinary } from "../utils/cloudinary";
 import sharp from "sharp";
 import path from "path";
+import ApiResponse from "utils/ApiResponse";
 
 type CreatePostRequestBody = {
   caption: string;
@@ -21,9 +22,7 @@ export const createPost = async (
 
   try {
     if (!image?.buffer) {
-      return res
-        .status(500)
-        .json({ success: false, message: "Image not available" });
+      return res.status(400).json(new ApiResponse(400, "Image not available"));
     }
 
     const compressedImagePath = path.join(
@@ -41,7 +40,7 @@ export const createPost = async (
     if (!compressedFile) {
       return res
         .status(400)
-        .json({ success: false, message: "Couldn't compress image" });
+        .json(new ApiResponse(400, "Couldn't compress image"));
     }
 
     const imageUrl = await uploadOnCloudinary(compressedImagePath);
@@ -56,13 +55,12 @@ export const createPost = async (
 
     return res
       .status(201)
-      .json({ success: true, message: "Post created successfully" });
+      .json(new ApiResponse(200, "Post created successfully"));
   } catch (error) {
     console.log(error);
-    return res.status(500).json({
-      success: false,
-      message: "Something went wrong.Please try again",
-    });
+    return res
+      .status(500)
+      .json(new ApiResponse(500, "Something went wrong.Please try again"));
   }
 };
 
@@ -72,12 +70,15 @@ export const getRecentPosts = async (_: Request, res: Response) => {
       .populate("creator")
       .sort({ createdAt: -1 });
 
-    if (recentPost.length < 1) return res.status(404).json("No Post available");
+    if (recentPost.length < 1)
+      return res
+        .status(200)
+        .json(new ApiResponse(200, "No post available", []));
 
-    return res.status(200).json(recentPost);
+    return res.status(200).json(new ApiResponse(200, "", recentPost));
   } catch (error) {
     console.log("error");
-    return res.status(500).json({ message: "Couldn't to get Post" });
+    return res.status(500).json(new ApiResponse(500, "Couldn't get posts"));
   }
 };
 
@@ -85,13 +86,19 @@ export const likePost = async (req: Request, res: Response) => {
   const { postId } = req.params;
   const { likesList } = req.body;
 
+  if (!postId || likesList) {
+    return res
+      .status(400)
+      .json(new ApiResponse(400, "All fields are required"));
+  }
+
   try {
     await Post.updateOne({ _id: postId }, { $set: { likes: likesList } });
-    return res.status(200).json({ success: true });
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "Post updated successfully"));
   } catch (error) {
     console.log(error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Couldn't update post" });
+    return res.status(500).json(new ApiResponse(500, "Couldn't update post"));
   }
 };

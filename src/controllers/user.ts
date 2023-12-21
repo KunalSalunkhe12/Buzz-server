@@ -3,19 +3,22 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
 import User from "../models/user";
+import ApiResponse from "../utils/ApiResponse";
 
 export const signup = async (req: Request, res: Response) => {
   const { name, username, password, email } = req.body;
 
   if (!name || !username || !password || !email) {
-    return res.status(400).json({ message: "All fields are required" });
+    return res
+      .status(400)
+      .json(new ApiResponse(400, "All fields are required!"));
   }
 
   try {
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
+      return res.status(400).json(new ApiResponse(400, "User already Exist"));
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -33,12 +36,12 @@ export const signup = async (req: Request, res: Response) => {
       { expiresIn: "1d" }
     );
 
-    return res.status(200).json(token);
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "User created successfully", token));
   } catch (error) {
     console.log(error);
-    return res
-      .status(500)
-      .json({ message: "Something went wrong. Please Try again" });
+    return res.status(500).json(new ApiResponse(500, "Couldn't Create User"));
   }
 };
 
@@ -46,14 +49,16 @@ export const signin = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res.status(400).json({ message: "All fields are required" });
+    return res
+      .status(400)
+      .json(new ApiResponse(400, "All fields are required"));
   }
 
   try {
     const existingUser = await User.findOne({ email });
 
     if (!existingUser)
-      return res.status(404).json({ message: "User doesn't exist" });
+      return res.status(404).json(new ApiResponse(404, "User does not Exist!"));
 
     const isPasswordCorrect = await bcrypt.compare(
       password,
@@ -61,19 +66,19 @@ export const signin = async (req: Request, res: Response) => {
     );
 
     if (!isPasswordCorrect)
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(400).json(new ApiResponse(400, "Invalid Credentials"));
 
     const token = jwt.sign(
       { email: existingUser.email, id: existingUser._id },
       process.env.JWT_SECRET as string,
       { expiresIn: "3h" }
     );
-    return res.status(200).json(token);
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "Sign in successfully", token));
   } catch (error) {
     console.log(error);
-    return res
-      .status(500)
-      .json({ message: "Something went wrong. Please Try again" });
+    return res.status(500).json(new ApiResponse(500, "Couldn't sign in user"));
   }
 };
 
@@ -83,28 +88,32 @@ export const getCurrentUser = async (req: Request, res: Response) => {
   try {
     const currentUser = await User.findOne({ email });
 
-    return res.status(200).json(currentUser);
+    return res.status(200).json(new ApiResponse(200, "", currentUser));
   } catch (error) {
     console.log(error);
-    return res.status(404).json({ message: "User Not found" });
+    return res.status(404).json(new ApiResponse(404, "User not found"));
   }
 };
 
 export const savePost = async (req: Request, res: Response) => {
   const user = req.user;
   const { savedPostList } = req.body;
-  if (!savedPostList || !user) return res.status(400).json({ success: false });
+
+  if (!savedPostList)
+    return res
+      .status(400)
+      .json(new ApiResponse(400, "All fields are required"));
 
   try {
     await User.updateOne(
       { _id: user?.id },
       { $set: { savedPosts: savedPostList } }
     );
-    return res.status(200).json({ success: true });
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "User updated successfully"));
   } catch (error) {
     console.log(error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Couldn't Save post" });
+    return res.status(500).json(new ApiResponse(500, "Couldn't Save post"));
   }
 };
