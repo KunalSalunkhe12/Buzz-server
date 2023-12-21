@@ -33,7 +33,14 @@ export const signup = async (req: express.Request, res: express.Response) => {
       { expiresIn: "1d" }
     );
 
-    return res.status(200).json({ token, result });
+    const user = {
+      _id: result._id,
+      name: result.name,
+      username: result.username,
+      email: result.email,
+    };
+
+    return res.status(200).json({ token, user });
   } catch (error) {
     console.log(error);
     return res
@@ -63,12 +70,19 @@ export const signin = async (req: express.Request, res: express.Response) => {
     if (!isPasswordCorrect)
       return res.status(400).json({ message: "Invalid credentials" });
 
+    const user = {
+      _id: existingUser._id,
+      name: existingUser.name,
+      username: existingUser.username,
+      email: existingUser.email,
+    };
+
     const token = jwt.sign(
       { email: existingUser.email, id: existingUser._id },
       process.env.JWT_SECRET as string,
       { expiresIn: "3h" }
     );
-    return res.status(200).json({ result: existingUser, token });
+    return res.status(200).json({ user, token });
   } catch (error) {
     console.log(error);
     return res
