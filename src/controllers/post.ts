@@ -80,3 +80,18 @@ export const getRecentPosts = async (_: Request, res: Response) => {
     return res.status(500).json({ message: "Couldn't to get Post" });
   }
 };
+
+export const likePost = async (req: Request, res: Response) => {
+  const { postId } = req.params;
+  const { likesList } = req.body;
+
+  try {
+    await Post.updateOne({ _id: postId }, { $set: { likes: likesList } });
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Couldn't update post" });
+  }
+};

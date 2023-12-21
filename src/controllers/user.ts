@@ -89,3 +89,22 @@ export const getCurrentUser = async (req: Request, res: Response) => {
     return res.status(404).json({ message: "User Not found" });
   }
 };
+
+export const savePost = async (req: Request, res: Response) => {
+  const user = req.user;
+  const { savedPostList } = req.body;
+  if (!savedPostList || !user) return res.status(400).json({ success: false });
+
+  try {
+    await User.updateOne(
+      { _id: user?.id },
+      { $set: { savedPosts: savedPostList } }
+    );
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Couldn't Save post" });
+  }
+};
