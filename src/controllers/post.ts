@@ -3,7 +3,7 @@ import Post from "../models/post";
 import { uploadOnCloudinary } from "../utils/cloudinary";
 import sharp from "sharp";
 import path from "path";
-import ApiResponse from "utils/ApiResponse";
+import ApiResponse from "../utils/ApiResponse";
 
 type CreatePostRequestBody = {
   caption: string;
@@ -86,7 +86,7 @@ export const likePost = async (req: Request, res: Response) => {
   const { postId } = req.params;
   const { likesList } = req.body;
 
-  if (!postId || likesList) {
+  if (!postId || !likesList) {
     return res
       .status(400)
       .json(new ApiResponse(400, "All fields are required"));
