@@ -97,9 +97,9 @@ export const getCurrentUser = async (req: Request, res: Response) => {
 
 export const savePost = async (req: Request, res: Response) => {
   const user = req.user;
-  const { savedPostList } = req.body;
+  const { savedPostsList } = req.body;
 
-  if (!savedPostList)
+  if (!savedPostsList)
     return res
       .status(400)
       .json(new ApiResponse(400, "All fields are required"));
@@ -107,7 +107,7 @@ export const savePost = async (req: Request, res: Response) => {
   try {
     await User.updateOne(
       { _id: user?.id },
-      { $set: { savedPosts: savedPostList } }
+      { $set: { savedPosts: savedPostsList } }
     );
     return res
       .status(200)
