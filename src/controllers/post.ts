@@ -166,6 +166,9 @@ export const updatePost = async (
 
     const newImageUrl = await uploadOnCloudinary(compressedImagePath);
 
+    //Delete the existing image on Cloudinary
+    await deleteOnCloudinary(imageUrl);
+
     if (!newImageUrl) {
       return res
         .status(400)
@@ -180,9 +183,6 @@ export const updatePost = async (
     };
 
     await Post.findByIdAndUpdate({ postId }, { $set: updatedPost });
-
-    //Delete the
-    deleteOnCloudinary(imageUrl);
 
     return res
       .status(200)
