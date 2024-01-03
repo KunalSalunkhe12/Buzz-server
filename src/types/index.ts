@@ -8,9 +8,11 @@ export type TUser = {
 export type TNewPost = {
   creator: string;
   caption: string;
-  imageUrl: string;
+  imageUrl: string | null;
   location: string;
   tags: string[];
   likes?: string[];
   save?: string[];
 };
+
+export type TUpdatePost = Partial<TNewPost>;
