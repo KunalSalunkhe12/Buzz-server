@@ -1,10 +1,9 @@
 import { Request, Response } from "express";
 import Post from "../models/post";
-import { deleteOnCloudinary, uploadOnCloudinary } from "../utils/cloudinary";
-import sharp from "sharp";
-import path from "path";
+import { uploadOnCloudinary } from "../utils/cloudinary";
 import ApiResponse from "../utils/ApiResponse";
 import { TUpdatePost } from "types";
+import { compressFile } from "../utils/compressFile";
 
 type CreatePostRequestBody = {
   caption: string;
@@ -26,17 +25,7 @@ export const createPost = async (
       return res.status(400).json(new ApiResponse(400, "Image not available"));
     }
 
-    const compressedImagePath = path.join(
-      __dirname,
-      "..",
-      "..",
-      "uploads",
-      Date.now().toString() + image.originalname
-    );
-
-    const compressedFile = await sharp(image.buffer)
-      .jpeg({ quality: 80 })
-      .toFile(compressedImagePath);
+    const { compressedFile, compressedImagePath } = await compressFile(image);
 
     if (!compressedFile) {
       return res
@@ -44,7 +33,8 @@ export const createPost = async (
         .json(new ApiResponse(400, "Couldn't compress image"));
     }
 
-    const imageUrl = await uploadOnCloudinary(compressedImagePath);
+    const cloudinary = await uploadOnCloudinary(compressedImagePath);
+    const imageUrl = cloudinary?.url;
 
     await Post.create({
       creator: user?.id,
@@ -52,6 +42,7 @@ export const createPost = async (
       location,
       tags: tagsArr,
       imageUrl,
+      imageId: cloudinary?.public_id,
     });
 
     return res
@@ -125,68 +116,39 @@ export const getPostById = async (req: Request, res: Response) => {
     return res.status(500).json(new ApiResponse(500, "Can't fetch Post"));
   }
 };
+
 type UpdatePostRequestBody = {
   imageUrl: string;
   caption: string;
   location: string;
   tags: string;
+  imageId: string;
 };
 
 export const updatePost = async (
   req: Request<any, any, UpdatePostRequestBody>,
   res: Response
 ) => {
-  const { imageUrl, caption, location, tags } = req.body;
-  const postId = req.params;
-  const image = req.file;
+  const { caption, location, tags } = req.body;
+  const { postId } = req.params;
   const tagsArr = tags.split(", ");
 
   try {
-    if (!image?.buffer) {
-      return res.status(400).json(new ApiResponse(400, "Image not available"));
-    }
-
-    const compressedImagePath = path.join(
-      __dirname,
-      "..",
-      "..",
-      "uploads",
-      Date.now().toString() + image.originalname
-    );
-
-    const compressedFile = await sharp(image.buffer)
-      .jpeg({ quality: 80 })
-      .toFile(compressedImagePath);
-
-    if (!compressedFile) {
-      return res
-        .status(400)
-        .json(new ApiResponse(400, "Couldn't compress image"));
-    }
-
-    const newImageUrl = await uploadOnCloudinary(compressedImagePath);
-
-    //Delete the existing image on Cloudinary
-    await deleteOnCloudinary(imageUrl);
-
-    if (!newImageUrl) {
-      return res
-        .status(400)
-        .json(new ApiResponse(400, "Couldn't upload image on Cloudinary"));
-    }
-
-    const updatedPost: TUpdatePost = {
+    const updatedPostData: TUpdatePost = {
       caption,
       location,
       tags: tagsArr,
-      imageUrl: newImageUrl,
     };
 
-    await Post.findByIdAndUpdate({ postId }, { $set: updatedPost });
+    const updatedPost = await Post.findByIdAndUpdate(
+      postId,
+      { $set: updatedPostData },
+      { new: true }
+    );
 
     return res
       .status(200)
-      .json(new ApiResponse(200, "Post updated successfully"));
+      .json(new ApiResponse(200, "Post updated successfully", updatedPost));
   } catch (error) {
     console.log(error);
     return res.status(500).json(new ApiResponse(500, "Couldn't update Post"));

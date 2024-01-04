@@ -15,7 +15,7 @@ export const uploadOnCloudinary = async (localFilePath: string) => {
     if (response) {
       fs.unlinkSync(localFilePath);
     }
-    return response.url;
+    return response;
   } catch (error) {
     console.log(error);
     fs.unlinkSync(localFilePath);
@@ -25,9 +25,10 @@ export const uploadOnCloudinary = async (localFilePath: string) => {
 
 export const deleteOnCloudinary = async (publicId: string) => {
   try {
-    await cloudinary.uploader.destroy(publicId, {
+    const response = await cloudinary.uploader.destroy(publicId, {
       resource_type: "image",
     });
+    console.log("delete res", response);
   } catch (error) {
     console.log(error);
   }

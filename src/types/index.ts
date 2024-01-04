@@ -9,6 +9,7 @@ export type TNewPost = {
   creator: string;
   caption: string;
   imageUrl: string | null;
+  imageId: string;
   location: string;
   tags: string[];
   likes?: string[];
