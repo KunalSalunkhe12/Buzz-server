@@ -5,6 +5,44 @@ import ApiResponse from "../utils/ApiResponse";
 import { TUpdatePost } from "types";
 import { compressFile } from "../utils/compressFile";
 
+export const getRecentPosts = async (_: Request, res: Response) => {
+  try {
+    const recentPost = await Post.find()
+      .limit(20)
+      .populate("creator")
+      .sort({ createdAt: -1 });
+
+    if (recentPost.length < 1)
+      return res
+        .status(200)
+        .json(new ApiResponse(200, "No post available", []));
+
+    return res.status(200).json(new ApiResponse(200, "", recentPost));
+  } catch (error) {
+    console.log("error");
+    return res.status(500).json(new ApiResponse(500, "Couldn't get posts"));
+  }
+};
+
+export const getPosts = async (req: Request, res: Response) => {
+  const { page = 1 } = req.query;
+  const limit = 10;
+  try {
+    // @ts-ignore
+    const paginatedPosts = await Post.paginate(
+      {},
+      { page: page, limit: limit }
+    );
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "Posts fetch Successful", paginatedPosts));
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(new ApiResponse(500, "Could not fetch posts"));
+  }
+};
+
 type CreatePostRequestBody = {
   caption: string;
   location: string;
@@ -53,24 +91,6 @@ export const createPost = async (
     return res
       .status(500)
       .json(new ApiResponse(500, "Something went wrong.Please try again"));
-  }
-};
-
-export const getRecentPosts = async (_: Request, res: Response) => {
-  try {
-    const recentPost = await Post.find()
-      .populate("creator")
-      .sort({ createdAt: -1 });
-
-    if (recentPost.length < 1)
-      return res
-        .status(200)
-        .json(new ApiResponse(200, "No post available", []));
-
-    return res.status(200).json(new ApiResponse(200, "", recentPost));
-  } catch (error) {
-    console.log("error");
-    return res.status(500).json(new ApiResponse(500, "Couldn't get posts"));
   }
 };
 
