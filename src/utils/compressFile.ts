@@ -11,7 +11,7 @@ export const compressFile = async (image: Express.Multer.File) => {
   );
 
   const compressedFile = await sharp(image.buffer)
-    .jpeg({ quality: 80 })
+    .webp({ quality: 70 })
     .toFile(compressedImagePath);
 
   return { compressedFile, compressedImagePath };

@@ -25,7 +25,7 @@ export const getRecentPosts = async (_: Request, res: Response) => {
 };
 
 export const getPosts = async (req: Request, res: Response) => {
-  const { page = 1 } = req.query;
+  const { page } = req.query || 1;
   const limit = 10;
   try {
     // @ts-ignore
