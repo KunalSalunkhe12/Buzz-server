@@ -31,7 +31,12 @@ export const getPosts = async (req: Request, res: Response) => {
     // @ts-ignore
     const paginatedPosts = await Post.paginate(
       {},
-      { page: page, limit: limit }
+      {
+        page: page,
+        limit: limit,
+        sort: { createdAt: -1 },
+        populate: "creator",
+      }
     );
 
     return res

@@ -16,8 +16,8 @@ const router = express.Router();
 router.post("/", auth, upload.single("image"), createPost);
 router.get("/", auth, getPosts);
 router.get("/recent", auth, getRecentPosts);
-router.get("/:postId", getPostById);
+router.get("/:postId", auth, getPostById);
 router.put("/like/:postId", auth, likePost);
-router.put("/:postId", upload.single("image"), updatePost);
+router.put("/:postId", auth, upload.single("image"), updatePost);
 
 export default router;
