@@ -1,9 +1,10 @@
 import { Request, Response } from "express";
 import Post from "../models/post";
-import { uploadOnCloudinary } from "../utils/cloudinary";
+import { deleteOnCloudinary, uploadOnCloudinary } from "../utils/cloudinary";
 import ApiResponse from "../utils/ApiResponse";
 import { TUpdatePost } from "types";
 import { compressFile } from "../utils/compressFile";
+import User from "../models/user";
 
 export const getPostById = async (req: Request, res: Response) => {
   const { postId } = req.params;
@@ -177,5 +178,36 @@ export const updatePost = async (
   } catch (error) {
     console.log(error);
     return res.status(500).json(new ApiResponse(500, "Couldn't update Post"));
+  }
+};
+
+export const deletePost = async (req: Request, res: Response) => {
+  const { postId } = req.params;
+
+  try {
+    await User.updateMany(
+      { savedPosts: postId },
+      { $pull: { savedPosts: postId } }
+    );
+
+    const post = await Post.findById({ _id: postId });
+    if (!post)
+      return res.status(404).json(new ApiResponse(404, "Post does not exist"));
+
+    const response = await deleteOnCloudinary(post.imageId);
+
+    if (response.result !== "ok")
+      res
+        .status(500)
+        .json(new ApiResponse(500, "Couldn't delete image on cloudinary"));
+
+    await Post.findByIdAndDelete({ _id: postId });
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "Post deleted successfully"));
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(new ApiResponse(500, "Couldn't delete Post"));
   }
 };

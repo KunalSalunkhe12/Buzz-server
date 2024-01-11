@@ -2,6 +2,7 @@ import express from "express";
 
 import {
   createPost,
+  deletePost,
   getPostById,
   getPosts,
   getRecentPosts,
@@ -19,5 +20,6 @@ router.get("/recent", auth, getRecentPosts);
 router.get("/:postId", auth, getPostById);
 router.put("/like/:postId", auth, likePost);
 router.put("/:postId", auth, upload.single("image"), updatePost);
+router.delete("/:postId", auth, deletePost);
 
 export default router;
