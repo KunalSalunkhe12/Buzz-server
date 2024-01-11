@@ -7,6 +7,7 @@ dotenv.config();
 
 import userRoutes from "./routes/user";
 import postRoutes from "./routes/post";
+import searchRoutes from "./routes/search";
 
 const app = express();
 app.use(cors());
@@ -20,6 +21,7 @@ app.get("/", (_, res) => {
 
 app.use("/user", userRoutes);
 app.use("/post", postRoutes);
+app.use("/search", searchRoutes);
 
 const PORT = process.env.PORT;
 

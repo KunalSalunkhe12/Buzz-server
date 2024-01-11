@@ -5,6 +5,28 @@ import ApiResponse from "../utils/ApiResponse";
 import { TUpdatePost } from "types";
 import { compressFile } from "../utils/compressFile";
 
+export const getPostById = async (req: Request, res: Response) => {
+  const { postId } = req.params;
+
+  if (!postId) {
+    return res.status(400).json(new ApiResponse(400, "All postId is required"));
+  }
+
+  try {
+    const post = await Post.findById({ _id: postId }).populate("creator");
+    if (!post) {
+      res.status(404).json(new ApiResponse(404, "Post doesn't exist"));
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "Post fetched successfully", post));
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(new ApiResponse(500, "Can't fetch Post"));
+  }
+};
+
 export const getRecentPosts = async (_: Request, res: Response) => {
   try {
     const recentPost = await Post.find()
@@ -25,7 +47,7 @@ export const getRecentPosts = async (_: Request, res: Response) => {
 };
 
 export const getPosts = async (req: Request, res: Response) => {
-  const { page } = req.query || 1;
+  const { page } = req.query;
   const limit = 10;
   try {
     // @ts-ignore
@@ -45,6 +67,28 @@ export const getPosts = async (req: Request, res: Response) => {
   } catch (error) {
     console.log(error);
     return res.status(500).json(new ApiResponse(500, "Could not fetch posts"));
+  }
+};
+
+export const searchPosts = async (req: Request, res: Response) => {
+  const { q: searchQuery } = req.query;
+  console.log(searchQuery);
+
+  if (!searchQuery)
+    return res
+      .status(404)
+      .json(new ApiResponse(404, "Search query is required"));
+
+  try {
+    const regex = new RegExp(String(searchQuery), "i");
+    const posts = await Post.find({
+      $or: [{ caption: { $regex: regex } }, { tags: { $in: [regex] } }],
+    });
+
+    return res.status(200).json(new ApiResponse(200, "", posts));
+  } catch (error) {
+    console.error("Error searching posts:", error);
+    return res.status(500).json(new ApiResponse(200, "Couldn't Search Posts"));
   }
 };
 
@@ -117,28 +161,6 @@ export const likePost = async (req: Request, res: Response) => {
   } catch (error) {
     console.log(error);
     return res.status(500).json(new ApiResponse(500, "Couldn't update post"));
-  }
-};
-
-export const getPostById = async (req: Request, res: Response) => {
-  const { postId } = req.params;
-
-  if (!postId) {
-    return res.status(400).json(new ApiResponse(400, "All postId is required"));
-  }
-
-  try {
-    const post = await Post.findById({ _id: postId }).populate("creator");
-    if (!post) {
-      res.status(404).json(new ApiResponse(404, "Post doesn't exist"));
-    }
-
-    return res
-      .status(200)
-      .json(new ApiResponse(200, "Post fetched successfully", post));
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json(new ApiResponse(500, "Can't fetch Post"));
   }
 };
 
