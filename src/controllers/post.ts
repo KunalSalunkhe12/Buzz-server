@@ -128,7 +128,7 @@ export const getPostById = async (req: Request, res: Response) => {
   }
 
   try {
-    const post = await Post.findById({ _id: postId });
+    const post = await Post.findById({ _id: postId }).populate("creator");
     if (!post) {
       res.status(404).json(new ApiResponse(404, "Post doesn't exist"));
     }
