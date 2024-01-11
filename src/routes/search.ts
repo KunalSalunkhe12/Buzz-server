@@ -1,6 +1,6 @@
 import express from "express";
 
-import { searchPosts } from "../controllers/post";
+import { searchPosts } from "../controllers/search";
 import auth from "../middleware/auth";
 
 const router = express.Router();

@@ -70,28 +70,6 @@ export const getPosts = async (req: Request, res: Response) => {
   }
 };
 
-export const searchPosts = async (req: Request, res: Response) => {
-  const { q: searchQuery } = req.query;
-  console.log(searchQuery);
-
-  if (!searchQuery)
-    return res
-      .status(404)
-      .json(new ApiResponse(404, "Search query is required"));
-
-  try {
-    const regex = new RegExp(String(searchQuery), "i");
-    const posts = await Post.find({
-      $or: [{ caption: { $regex: regex } }, { tags: { $in: [regex] } }],
-    });
-
-    return res.status(200).json(new ApiResponse(200, "", posts));
-  } catch (error) {
-    console.error("Error searching posts:", error);
-    return res.status(500).json(new ApiResponse(200, "Couldn't Search Posts"));
-  }
-};
-
 type CreatePostRequestBody = {
   caption: string;
   location: string;
