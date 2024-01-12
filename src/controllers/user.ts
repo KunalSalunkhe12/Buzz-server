@@ -86,7 +86,7 @@ export const getCurrentUser = async (req: Request, res: Response) => {
   const email = req.user?.email;
 
   try {
-    const currentUser = await User.findOne({ email });
+    const currentUser = await User.findOne({ email }).populate("savedPosts");
 
     return res.status(200).json(new ApiResponse(200, "", currentUser));
   } catch (error) {
