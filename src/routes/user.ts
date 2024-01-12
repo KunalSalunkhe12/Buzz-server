@@ -5,8 +5,10 @@ import {
   savePost,
   signin,
   signup,
+  updateProfile,
 } from "../controllers/user";
 import express from "express";
+import upload from "../middleware/upload";
 
 const router = express.Router();
 
@@ -15,5 +17,6 @@ router.post("/signin", signin);
 router.get("/", auth, getCurrentUser);
 router.put("/save-post", auth, savePost);
 router.get("/:userId", auth, getUserById);
+router.put("/update", auth, upload.single("profile"), updateProfile);
 
 export default router;

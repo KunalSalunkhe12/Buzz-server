@@ -5,6 +5,8 @@ import bcrypt from "bcryptjs";
 import User from "../models/user";
 import ApiResponse from "../utils/ApiResponse";
 import Post from "../models/post";
+import { deleteOnCloudinary, uploadOnCloudinary } from "../utils/cloudinary";
+import { compressFile } from "../utils/compressFile";
 
 export const signup = async (req: Request, res: Response) => {
   const { name, username, password, email } = req.body;
@@ -137,5 +139,59 @@ export const savePost = async (req: Request, res: Response) => {
   } catch (error) {
     console.log(error);
     return res.status(500).json(new ApiResponse(500, "Couldn't Save post"));
+  }
+};
+
+export const updateProfile = async (req: Request, res: Response) => {
+  const user = req.user;
+  const image = req.file;
+  const { name, bio, username, imageId } = req.body;
+
+  console.log(imageId);
+
+  try {
+    if (imageId) {
+      const response = await deleteOnCloudinary(imageId);
+
+      if (response.result !== "ok")
+        res
+          .status(500)
+          .json(new ApiResponse(500, "Couldn't delete image on cloudinary"));
+    }
+
+    if (!image?.buffer) {
+      return res.status(400).json(new ApiResponse(400, "Image not available"));
+    }
+
+    const { compressedFile, compressedImagePath } = await compressFile(image);
+
+    if (!compressedFile) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, "Couldn't compress image"));
+    }
+
+    const cloudinary = await uploadOnCloudinary(compressedImagePath);
+
+    const updatedUserData = {
+      name,
+      bio,
+      username,
+      imageUrl: cloudinary?.url,
+      imageId: cloudinary?.public_id,
+    };
+
+    const updatedUser = await User.findByIdAndUpdate(
+      { _id: user?.id },
+      { $set: updatedUserData },
+      { new: true }
+    );
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "User updated successfully", updatedUser));
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(new ApiResponse(500, "Couldn't update user"));
   }
 };

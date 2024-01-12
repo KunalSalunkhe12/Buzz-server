@@ -35,6 +35,9 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  imageId: {
+    type: String,
+  },
   likedPosts: [
     {
       type: mongoose.Schema.Types.ObjectId,

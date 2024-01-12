@@ -11,6 +11,8 @@ export const uploadOnCloudinary = async (localFilePath: string) => {
   try {
     const response = await cloudinary.uploader.upload(localFilePath, {
       resource_type: "image",
+      transformation: { angle: "ignore" },
+      exif: false,
     });
     if (response) {
       fs.unlinkSync(localFilePath);
