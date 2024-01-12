@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 
 import User from "../models/user";
 import ApiResponse from "../utils/ApiResponse";
+import Post from "../models/post";
 
 export const signup = async (req: Request, res: Response) => {
   const { name, username, password, email } = req.body;
@@ -89,6 +90,27 @@ export const getCurrentUser = async (req: Request, res: Response) => {
     const currentUser = await User.findOne({ email }).populate("savedPosts");
 
     return res.status(200).json(new ApiResponse(200, "", currentUser));
+  } catch (error) {
+    console.log(error);
+    return res.status(404).json(new ApiResponse(404, "User not found"));
+  }
+};
+
+export const getUserById = async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  try {
+    const result = await User.findById({ _id: userId });
+
+    if (!result) {
+      return res.status(404).json(new ApiResponse(404, "User not found"));
+    }
+    const posts = await Post.find({ creator: userId }).populate("creator");
+
+    const cleanedUser = result.toObject();
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "", { ...cleanedUser, posts }));
   } catch (error) {
     console.log(error);
     return res.status(404).json(new ApiResponse(404, "User not found"));
