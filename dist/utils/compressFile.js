@@ -16,7 +16,13 @@ exports.compressFile = void 0;
 const path_1 = __importDefault(require("path"));
 const sharp_1 = __importDefault(require("sharp"));
 const compressFile = (image) => __awaiter(void 0, void 0, void 0, function* () {
-    const compressedImagePath = path_1.default.join("/tmp", Date.now().toString() + image.originalname);
+    let compressedImagePath;
+    if (process.env.NODE_ENV === "development") {
+        compressedImagePath = path_1.default.join(__dirname, "..", "..", "uploads", Date.now().toString() + image.originalname);
+    }
+    else {
+        compressedImagePath = path_1.default.join("/tmp", Date.now().toString() + image.originalname);
+    }
     const { orientation } = yield (0, sharp_1.default)(image.buffer).metadata();
     const rotate = orientation && orientation >= 5 ? 90 : 0;
     const compressedFile = yield (0, sharp_1.default)(image.buffer)

@@ -147,51 +147,70 @@ export const updateProfile = async (req: Request, res: Response) => {
   const image = req.file;
   const { name, bio, username, imageId } = req.body;
 
-  console.log(imageId);
-
   try {
-    if (imageId) {
-      const response = await deleteOnCloudinary(imageId);
+    if (image) {
+      if (!image.buffer) {
+        return res
+          .status(400)
+          .json(new ApiResponse(400, "Image not available"));
+      }
 
-      if (response.result !== "ok")
-        res
-          .status(500)
-          .json(new ApiResponse(500, "Couldn't delete image on cloudinary"));
-    }
+      if (imageId) {
+        const deleteResponse = await deleteOnCloudinary(imageId);
 
-    if (!image?.buffer) {
-      return res.status(400).json(new ApiResponse(400, "Image not available"));
-    }
+        if (deleteResponse.result !== "ok") {
+          return res
+            .status(500)
+            .json(new ApiResponse(500, "Couldn't delete image on cloudinary"));
+        }
+      }
 
-    const { compressedFile, compressedImagePath } = await compressFile(image);
+      const { compressedFile, compressedImagePath } = await compressFile(image);
 
-    if (!compressedFile) {
+      if (!compressedFile) {
+        return res
+          .status(400)
+          .json(new ApiResponse(400, "Couldn't compress image"));
+      }
+
+      const cloudinary = await uploadOnCloudinary(compressedImagePath);
+
+      const updatedUserData = {
+        name,
+        bio,
+        username,
+        imageUrl: cloudinary?.url,
+        imageId: cloudinary?.public_id,
+      };
+
+      const updatedUser = await User.findByIdAndUpdate(
+        { _id: user?.id },
+        { $set: updatedUserData },
+        { new: true }
+      );
+
       return res
-        .status(400)
-        .json(new ApiResponse(400, "Couldn't compress image"));
+        .status(200)
+        .json(new ApiResponse(200, "User updated successfully", updatedUser));
+    } else {
+      const updatedUserData = {
+        name,
+        bio,
+        username,
+      };
+
+      const updatedUser = await User.findByIdAndUpdate(
+        { _id: user?.id },
+        { $set: updatedUserData },
+        { new: true }
+      );
+
+      return res
+        .status(200)
+        .json(new ApiResponse(200, "User updated successfully", updatedUser));
     }
-
-    const cloudinary = await uploadOnCloudinary(compressedImagePath);
-
-    const updatedUserData = {
-      name,
-      bio,
-      username,
-      imageUrl: cloudinary?.url,
-      imageId: cloudinary?.public_id,
-    };
-
-    const updatedUser = await User.findByIdAndUpdate(
-      { _id: user?.id },
-      { $set: updatedUserData },
-      { new: true }
-    );
-
-    return res
-      .status(200)
-      .json(new ApiResponse(200, "User updated successfully", updatedUser));
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return res.status(500).json(new ApiResponse(500, "Couldn't update user"));
   }
 };

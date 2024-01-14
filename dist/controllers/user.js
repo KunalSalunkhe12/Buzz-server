@@ -130,39 +130,54 @@ const updateProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     const user = req.user;
     const image = req.file;
     const { name, bio, username, imageId } = req.body;
-    console.log(imageId);
     try {
-        if (imageId) {
-            const response = yield (0, cloudinary_1.deleteOnCloudinary)(imageId);
-            if (response.result !== "ok")
-                res
-                    .status(500)
-                    .json(new ApiResponse_1.default(500, "Couldn't delete image on cloudinary"));
-        }
-        if (!(image === null || image === void 0 ? void 0 : image.buffer)) {
-            return res.status(400).json(new ApiResponse_1.default(400, "Image not available"));
-        }
-        const { compressedFile, compressedImagePath } = yield (0, compressFile_1.compressFile)(image);
-        if (!compressedFile) {
+        if (image) {
+            if (!image.buffer) {
+                return res
+                    .status(400)
+                    .json(new ApiResponse_1.default(400, "Image not available"));
+            }
+            if (imageId) {
+                const deleteResponse = yield (0, cloudinary_1.deleteOnCloudinary)(imageId);
+                if (deleteResponse.result !== "ok") {
+                    return res
+                        .status(500)
+                        .json(new ApiResponse_1.default(500, "Couldn't delete image on cloudinary"));
+                }
+            }
+            const { compressedFile, compressedImagePath } = yield (0, compressFile_1.compressFile)(image);
+            if (!compressedFile) {
+                return res
+                    .status(400)
+                    .json(new ApiResponse_1.default(400, "Couldn't compress image"));
+            }
+            const cloudinary = yield (0, cloudinary_1.uploadOnCloudinary)(compressedImagePath);
+            const updatedUserData = {
+                name,
+                bio,
+                username,
+                imageUrl: cloudinary === null || cloudinary === void 0 ? void 0 : cloudinary.url,
+                imageId: cloudinary === null || cloudinary === void 0 ? void 0 : cloudinary.public_id,
+            };
+            const updatedUser = yield user_1.default.findByIdAndUpdate({ _id: user === null || user === void 0 ? void 0 : user.id }, { $set: updatedUserData }, { new: true });
             return res
-                .status(400)
-                .json(new ApiResponse_1.default(400, "Couldn't compress image"));
+                .status(200)
+                .json(new ApiResponse_1.default(200, "User updated successfully", updatedUser));
         }
-        const cloudinary = yield (0, cloudinary_1.uploadOnCloudinary)(compressedImagePath);
-        const updatedUserData = {
-            name,
-            bio,
-            username,
-            imageUrl: cloudinary === null || cloudinary === void 0 ? void 0 : cloudinary.url,
-            imageId: cloudinary === null || cloudinary === void 0 ? void 0 : cloudinary.public_id,
-        };
-        const updatedUser = yield user_1.default.findByIdAndUpdate({ _id: user === null || user === void 0 ? void 0 : user.id }, { $set: updatedUserData }, { new: true });
-        return res
-            .status(200)
-            .json(new ApiResponse_1.default(200, "User updated successfully", updatedUser));
+        else {
+            const updatedUserData = {
+                name,
+                bio,
+                username,
+            };
+            const updatedUser = yield user_1.default.findByIdAndUpdate({ _id: user === null || user === void 0 ? void 0 : user.id }, { $set: updatedUserData }, { new: true });
+            return res
+                .status(200)
+                .json(new ApiResponse_1.default(200, "User updated successfully", updatedUser));
+        }
     }
     catch (error) {
-        console.log(error);
+        console.error(error);
         return res.status(500).json(new ApiResponse_1.default(500, "Couldn't update user"));
     }
 });
