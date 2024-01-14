@@ -3,10 +3,7 @@ import sharp from "sharp";
 
 export const compressFile = async (image: Express.Multer.File) => {
   const compressedImagePath = path.join(
-    __dirname,
-    "..",
-    "..",
-    "uploads",
+    "/tmp",
     Date.now().toString() + image.originalname
   );
 
