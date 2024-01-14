@@ -27,7 +27,7 @@ app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use("/uploads", express_1.default.static(path_1.default.join(__dirname, "..", "uploads")));
 app.get("/", (_req, res) => {
-    res.send("Buzz api");
+    res.send("Buzz social media app api");
 });
 app.use("/user", user_1.default);
 app.use("/post", post_1.default);
